@@ -114,14 +114,6 @@
                 <div class="task-text">{{ todo.task }}</div>
                 <div class="task-actions">
                   <button
-                    @click="editTask(todo)"
-                    class="btn btn-secondary"
-                    style="padding: 0.5rem 1rem; font-size: 0.75rem;"
-                    :disabled="todo.complete"
-                  >
-                    ✏️ Editar
-                  </button>
-                  <button
                     @click="deleteSingleTodo(todo.id)"
                     class="btn btn-danger"
                     style="padding: 0.5rem 1rem; font-size: 0.75rem;"
@@ -197,27 +189,6 @@
       </template>
     </div>
   </div>
-
-  <!-- Edit Task Modal (Simple Implementation) -->
-  <div v-if="editingTask" class="modal-overlay" @click="cancelEdit">
-    <div class="modal-content" @click.stop>
-      <h3>✏️ Editar Tarea</h3>
-      <input
-        v-model="editTaskText"
-        @keyup.enter="saveEdit"
-        @keyup.escape="cancelEdit"
-        type="text"
-        placeholder="Nuevo texto de la tarea..."
-        style="width: 100%; padding: 1rem; border-radius: 8px; border: 2px solid var(--border-color); background: var(--dark-bg); color: var(--text-primary); margin: 1rem 0;"
-      />
-      <div style="display: flex; gap: 1rem; justify-content: flex-end;">
-        <button @click="cancelEdit" class="btn btn-secondary">Cancelar</button>
-        <button @click="saveEdit" class="btn btn-primary" :disabled="!editTaskText.trim()">
-          💾 Guardar
-        </button>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script>
@@ -243,10 +214,6 @@ export default {
     const addingTask = ref(false);
     const removingCompleted = ref(false);
     const deletingTodo = ref(null);
-
-    // Edit task states
-    const editingTask = ref(null);
-    const editTaskText = ref('');
 
     // Computed properties
     const filteredTodos = computed(() => {
@@ -455,52 +422,6 @@ export default {
       logToConsole(`👁️ ${action} tareas completadas`);
     };
 
-    // New features
-    const editTask = (task) => {
-      editingTask.value = task;
-      editTaskText.value = task.task;
-      logToConsole(`✏️ Editando tarea #${task.id}: "${task.task}"`);
-    };
-
-    const saveEdit = async () => {
-      if (!editTaskText.value.trim() || !editingTask.value) return;
-      
-      const originalText = editingTask.value.task;
-      const newText = editTaskText.value.trim();
-      
-      if (originalText === newText) {
-        cancelEdit();
-        return;
-      }
-      
-      try {
-        logToConsole(`🔄 Actualizando tarea #${editingTask.value.id}`);
-        
-        const updatedTodo = await ApiService.updateTodo(editingTask.value.id, { task: newText });
-        
-        const index = todos.value.findIndex(todo => todo.id === editingTask.value.id);
-        if (index !== -1) {
-          todos.value[index] = updatedTodo;
-        }
-        
-        logToConsole(`✅ Tarea #${editingTask.value.id} actualizada: "${originalText}" → "${newText}"`, 'success');
-        showMessage('✏️ Tarea actualizada correctamente');
-        
-        cancelEdit();
-        
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Error al actualizar tarea';
-        showMessage(message, true);
-        logToConsole(`❌ Error al actualizar tarea: ${message}`, 'error');
-      }
-    };
-
-    const cancelEdit = () => {
-      editingTask.value = null;
-      editTaskText.value = '';
-      logToConsole('✖️ Edición cancelada');
-    };
-
     const exportTasks = () => {
       try {
         const exportData = {
@@ -585,8 +506,6 @@ export default {
       addingTask,
       removingCompleted,
       deletingTodo,
-      editingTask,
-      editTaskText,
       
       // Computed
       filteredTodos,
@@ -604,9 +523,6 @@ export default {
       deleteSingleTodo,
       removeCompletedTasks,
       toggleShowCompleted,
-      editTask,
-      saveEdit,
-      cancelEdit,
       exportTasks,
       downloadLogs
     };
@@ -615,36 +531,5 @@ export default {
 </script>
 
 <style>
-/* Modal styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(4px);
-}
-
-.modal-content {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 2rem;
-  max-width: 500px;
-  width: 90%;
-  box-shadow: var(--shadow-xl);
-}
-
-.modal-content h3 {
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-  font-size: 1.25rem;
-}
-
-/* Los demás estilos están en el archivo CSS separado */
+/* Los estilos están en el archivo CSS separado */
 </style>
